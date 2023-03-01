@@ -38,13 +38,16 @@ int main()
 
     // Sharp GP2Y0A41SK0F, 4-40 cm IR Sensor
     float ir_distance_mV = 0.0f; // define variable to store measurement
+    float ir_distance_cm = 0.0f;
+    AnalogIn ir_distance_sensor(PC_2); //PES Kit 12 Sensor
+    
     //??? // create AnalogIn object to read in infrared distance sensor, 0...3.3V are mapped to 0...1
 
 
     main_task_timer.start();
     
     // this loop will run forever
-    while (true) {
+    while (true) { 
 
         main_task_timer.reset();
 
@@ -52,6 +55,10 @@ int main()
 
             if (mechanical_button.read()) {
 
+                ir_distance_mV = ir_distance_sensor.read() * 3300.0;
+                float matlab_const_a = 1.097 * pow(10, 4);
+                float matlab_const_b = -52.36;
+                ir_distance_cm = matlab_const_a / ( ir_distance_mV + matlab_const_b);
                 // read analog input
                 //ir_distance_mV = ???;
 
@@ -66,7 +73,7 @@ int main()
                 do_reset_all_once = false;
 
                 ir_distance_mV = 0.0f;
-
+                ir_distance_cm = 0.0f;
                 additional_led = 0;
             }            
         }
@@ -75,7 +82,8 @@ int main()
         user_led = !user_led;
 
         // do only output via serial what's really necessary, this makes your code slow
-        printf("IR sensor (mV): %3.3f\r\n", ir_distance_mV);
+        printf("IR sensor (mV): %3.3f\t\t", ir_distance_mV);
+        printf("IR sensor (cm): %3.3f\r\n", ir_distance_cm);
 
         // read timer and make the main thread sleep for the remaining time span (non blocking)
         int main_task_elapsed_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(main_task_timer.elapsed_time()).count();
